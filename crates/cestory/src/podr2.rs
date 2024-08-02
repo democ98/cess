@@ -428,14 +428,14 @@ impl Podr2Server {
                     .try_push(digest_info_history)
                     .map_err(|_| Status::internal("Fail to conver tee_digest_list from miner into".to_string()))?;
             }
-            // if !self.master_key.verify_data(
-            //     &sr25519::Signature::from_raw(request.last_tee_signature.try_into().map_err(|_| {
-            //         Status::invalid_argument("The last_tee_signature you provided is length is not 64".to_string())
-            //     })?),
-            //     &calculate_hash(&tag_sig_info_history.encode()),
-            // ) {
-            //     return Err(Status::invalid_argument("The last_tee_signature you provided is incorrect".to_string()))
-            // };
+            if !self.master_key.verify_data(
+                &sr25519::Signature::from_raw(request.last_tee_signature.try_into().map_err(|_| {
+                    Status::invalid_argument("The last_tee_signature you provided is length is not 64".to_string())
+                })?),
+                &calculate_hash(&tag_sig_info_history.encode()),
+            ) {
+                return Err(Status::invalid_argument("The last_tee_signature you provided is incorrect".to_string()))
+            };
         };
 
         let new_tee_record = DigestInfo {
