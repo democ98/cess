@@ -52,7 +52,16 @@ pub async fn maybe_sync_mq_egress(
         info!("Next seq for {} is {}", sender, min_seq);
 
         for message in messages {
+            
+            info!("sequence:{:?}----------------------------------------------------------------min_seq{:?}",message.sequence,min_seq);
             if message.sequence < min_seq {
+                let msg_info = format!(
+                    "sender={} seq={} dest={} nonce={:?}",
+                    sender,
+                    message.sequence,
+                    String::from_utf8_lossy(&message.message.destination.path()[..]),
+                    signer.nonce()
+                );
                 info!("{} has been submitted. Skipping...", message.sequence);
                 continue;
             }
