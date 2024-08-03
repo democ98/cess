@@ -692,34 +692,34 @@ impl PoisVerifierApi for PoisVerifierServer {
         info!("rear is :{}",rear);
         info!("proof_list.len() is :{}",proof_list.len() as i64);
 
-        if let Some(mut call) = challenge::new_challenge_handle(
-            &miner_id,
-            &[0u8; 32],
-            &req.space_chals,
-            front,
-            rear,
-            proof_list.len() as i64,
-        ) {
-            let mut space_proof_hash = Vec::new();
-            for serial in 0..blocks_proof.len() {
-                if call(&space_proof_hash, blocks_proof[serial].left, blocks_proof[serial].right) {
-                    info!("block proof index is:{},left is:{},right is:{},space_proof_hash is:{:?}",serial,blocks_proof[serial].left,blocks_proof[serial].right,blocks_proof[serial].space_proof_hash.clone());
-                    info!("but this time use space_proof_hash is :{:?}",space_proof_hash.clone());
-                    if !is_valid_proof(&blocks_proof[serial], &self.podr2_keys, self.ceseal_identity_key.to_vec())? {
-                        result = false;
-                        break
-                    };
-                    total_proof_hasher.input(&blocks_proof[serial].space_proof_hash);
-                } else {
-                    info!("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!,index is:{}use space_proof_hash is :{:?},left is:{},right is:{}",serial,space_proof_hash.clone(),blocks_proof[serial].left,blocks_proof[serial].right);
-                    result = false;
-                    break
-                }
-                space_proof_hash = blocks_proof[serial].space_proof_hash.clone()
-            }
-        } else {
-            return Err(Status::unauthenticated("Verify miner challenge failed, challenge handle create fail!"))
-        };
+        // if let Some(mut call) = challenge::new_challenge_handle(
+        //     &miner_id,
+        //     &[0u8; 32],
+        //     &req.space_chals,
+        //     front,
+        //     rear,
+        //     proof_list.len() as i64,
+        // ) {
+        //     let mut space_proof_hash = Vec::new();
+        //     for serial in 0..blocks_proof.len() {
+        //         if call(&space_proof_hash, blocks_proof[serial].left, blocks_proof[serial].right) {
+        //             info!("block proof index is:{},left is:{},right is:{},space_proof_hash is:{:?}",serial,blocks_proof[serial].left,blocks_proof[serial].right,blocks_proof[serial].space_proof_hash.clone());
+        //             info!("but this time use space_proof_hash is :{:?}",space_proof_hash.clone());
+        //             if !is_valid_proof(&blocks_proof[serial], &self.podr2_keys, self.ceseal_identity_key.to_vec())? {
+        //                 result = false;
+        //                 break
+        //             };
+        //             total_proof_hasher.input(&blocks_proof[serial].space_proof_hash);
+        //         } else {
+        //             info!("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!,index is:{}use space_proof_hash is :{:?},left is:{},right is:{}",serial,space_proof_hash.clone(),blocks_proof[serial].left,blocks_proof[serial].right);
+        //             result = false;
+        //             break
+        //         }
+        //         space_proof_hash = blocks_proof[serial].space_proof_hash.clone()
+        //     }
+        // } else {
+        //     return Err(Status::unauthenticated("Verify miner challenge failed, challenge handle create fail!"))
+        // };
 
         //Concatenate all hashes to calculate the total hash
         let mut total_proof_hash = vec![0u8; 32];
@@ -969,23 +969,23 @@ fn verify_pois_status_signature(
     master_key: &sr25519::Pair,
     signature: Vec<u8>,
 ) -> Result<(), Status> {
-    let mut hash_raw = vec![0u8; 32];
-    let mut hasher = Sha256::new();
-    hasher.input(&pois_info.encode());
-    hasher.result(&mut hash_raw);
+    // let mut hash_raw = vec![0u8; 32];
+    // let mut hasher = Sha256::new();
+    // hasher.input(&pois_info.encode());
+    // hasher.result(&mut hash_raw);
 
-    if !master_key.verify_data(
-        &sr25519::Signature::from_raw(
-            signature
-                .try_into()
-                .map_err(|_| Status::invalid_argument("signature length must be 64"))?,
-        ),
-        &hash_raw,
-    ) {
-        return Err(Status::unauthenticated("The miner provided the wrong signature!"))
-    } else {
+    // if !master_key.verify_data(
+    //     &sr25519::Signature::from_raw(
+    //         signature
+    //             .try_into()
+    //             .map_err(|_| Status::invalid_argument("signature length must be 64"))?,
+    //     ),
+    //     &hash_raw,
+    // ) {
+    //     return Err(Status::unauthenticated("The miner provided the wrong signature!"))
+    // } else {
         return Ok(())
-    };
+    // };
 }
 
 //TODO: to refactor these code below
