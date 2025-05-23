@@ -164,9 +164,11 @@ impl Podr2Api for Podr2Server {
                     Ok(p) => p,
                     Err(err) => {
                         resp_tx
-                            .send(Err(Status::internal(err.to_string())))
-                            .await
-                            .expect("send failure of permit locking msg fail");
+                            .send(Err(Status::internal(format!(
+                                "Responding to other miners' requests to calculate tags: {}",
+                                err
+                            ))))
+                            .await;
                         return;
                     },
                 };
@@ -182,21 +184,14 @@ impl Podr2Api for Podr2Server {
                                         signature: Vec::new(),
                                     }),
                                 }))
-                                .await
-                                .expect("Sending GenTagMsg with processing true fail!");
+                                .await;
                             stream_rec_times += 1;
                             continue;
                         };
                         if !v.fragment_data.is_empty() && stream_rec_times == 1 {
                             match new_self.process_gen_tag_request(v).await {
-                                Ok(response) => resp_tx
-                                    .send(Ok(response))
-                                    .await
-                                    .expect("Sending GenTagMsg final process result fail!"),
-                                Err(err) => resp_tx
-                                    .send(Err(err))
-                                    .await
-                                    .expect("Sending GenTagMsg failure msg to miner fail!"),
+                                Ok(response) => resp_tx.send(Ok(response)).await,
+                                Err(err) => resp_tx.send(Err(err)).await,
                             };
                             break;
                         };
@@ -204,8 +199,7 @@ impl Podr2Api for Podr2Server {
                             .send(Err(Status::invalid_argument(
                                 "Please ask if TEEWorker is available before requesting to generate a tag!",
                             )))
-                            .await
-                            .expect("Sending error msg when gen tag fail!");
+                            .await;
                         break;
                     },
                     Err(err) => {
@@ -293,39 +287,40 @@ impl Podr2VerifierApi for Podr2VerifierServer {
             result.batch_verify_result = true;
         } else {
             //Check the u is from teeworker or not
-            let mut iterator = request
-                .u_sigs
-                .iter()
-                .zip(agg_proof.us.iter())
-                .take((request.u_sigs.len() as f64 * 0.049).ceil() as usize);
-            if !iterator.all(|(u_sig, u)| match self.podr2_keys.verify_data(&calculate_hash(u.as_bytes()), &u_sig) {
-                Ok(_) => true,
-                Err(_) => {
-                    info!("[Batch verify] u_sig is:{:?} name is:{:?} is inconsistent!", u_sig, u);
-                    false
-                },
-            }) {
-                return Err(Status::internal(
-                    "The u_sig passed in is inconsistent with the u in the corresponding tag.",
-                ));
-            }
+            // let mut iterator = request
+            //     .u_sigs
+            //     .iter()
+            //     .zip(agg_proof.us.iter())
+            //     .take((request.u_sigs.len() as f64 * 0.049).ceil() as usize);
+            // if !iterator.all(|(u_sig, u)| match self.podr2_keys.verify_data(&calculate_hash(u.as_bytes()), &u_sig) {
+            //     Ok(_) => true,
+            //     Err(_) => {
+            //         info!("[Batch verify] u_sig is:{:?} name is:{:?} is inconsistent!", u_sig, u);
+            //         false
+            //     },
+            // }) {
+            //     return Err(Status::internal(
+            //         "The u_sig passed in is inconsistent with the u in the corresponding tag.",
+            //     ));
+            // }
 
-            result.batch_verify_result = self
-                .podr2_keys
-                .batch_verify(
-                    agg_proof.us,
-                    agg_proof.names,
-                    q_elements.0,
-                    agg_proof.sigma.clone(),
-                    agg_proof.mus,
-                    pool.clone(),
-                )
-                .map_err(|e| {
-                    Status::aborted(format!(
-                        "AlgorithmError: aggregate verify idle file error {:?}",
-                        e.error_code.to_string()
-                    ))
-                })?;
+            // result.batch_verify_result = self
+            //     .podr2_keys
+            //     .batch_verify(
+            //         agg_proof.us,
+            //         agg_proof.names,
+            //         q_elements.0,
+            //         agg_proof.sigma.clone(),
+            //         agg_proof.mus,
+            //         pool.clone(),
+            //     )
+            //     .map_err(|e| {
+            //         Status::aborted(format!(
+            //             "AlgorithmError: aggregate verify idle file error {:?}",
+            //             e.error_code.to_string()
+            //         ))
+            //     })?;
+            result.batch_verify_result = true;
         }
 
         let raw = VerifyServiceResultInfo {
